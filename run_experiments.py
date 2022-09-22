@@ -8,7 +8,7 @@ Note: To make the animation work in Spyder you should set graphics backend to 'A
 import argparse
 import glob
 from pathlib import Path
-from cbs import CBSSolver
+from Solvers.cbs import CBSSolver
 from Solvers.independent import IndependentSolver
 from Solvers.prioritized import PrioritizedPlanningSolver
 from Solvers.distributed import DistributedPlanningSolver # Placeholder for Distributed Planning
@@ -109,6 +109,7 @@ def import_mapf_instance(filename):
 
 
 if __name__ == '__main__':
+    print("Working")
     parser = argparse.ArgumentParser(description='Runs various MAPF algorithms')
     parser.add_argument('--instance', type=str, default=None,
                         help='The name of the instance file(s)')
@@ -120,12 +121,14 @@ if __name__ == '__main__':
                         help='The solver to use (one of: {CBS,Independent,Prioritized}), defaults to ' + str(SOLVER))
 
     args = parser.parse_args()
+    print(args)
     # Hint: Command line options can be added in Spyder by pressing CTRL + F6 > Command line options. 
     # In PyCharm, they can be added as parameters in the configuration.
 
     result_file = open("results.csv", "w", buffering=1)
 
     for file in sorted(glob.glob(args.instance)):
+        print(file)
 
         print("***Import an instance***")
         my_map, starts, goals = import_mapf_instance(file)
