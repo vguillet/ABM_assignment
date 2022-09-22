@@ -183,6 +183,10 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
 
+            # Check if new location is not outside the map
+            if child_loc[0] < 0 or child_loc[1] < 0 or child_loc[0] >= len(my_map) or child_loc[1] >= len(my_map[0]):
+                continue
+
             # -> Check if new location has obstacle
             if my_map[child_loc[0]][child_loc[1]]:
                 continue
