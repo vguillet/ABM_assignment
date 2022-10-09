@@ -106,12 +106,12 @@ class CBSSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        print("Generate node {}".format(self.num_of_generated))
+        # print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += 1
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        print("Expand node {}".format(id))
+        # print("Expand node {}".format(id))
         self.num_of_expanded += 1
         return node
 
@@ -157,31 +157,56 @@ class CBSSolver(object):
         #             3. Otherwise, choose the first collision and convert to a list of constraints (using your
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
+        tick = 1
         while len(self.open_list) > 0:  # As long as there are still nodes in the open_list
-            curr = self.pop_node()  # Pop a node from the list
-            if len(curr['collisions']) == 0:  # If there are no collisions in the selected node, return the paths
-                return curr['paths']
-            collision = curr['collisions'][0]
-            constraints = standard_splitting(collision)  # Get collisions and split them in constraints for agents
-            for constraint in constraints:
-                constraints_addition = curr['constraints']
-                if constraint not in curr['constraints']:
-                    constraints_addition.append(constraint)  # For each constraint, check if exists and if not, append
-                # Make 2 nodes for each agent's perspective
-                Q = {'cost': 0, 'constraints': constraints_addition, 'paths': curr['paths'], 'collisions': []}
-                a_i = constraint['agent']
-                # Find the new path of the agents
-                path = a_star(self.my_map, self.starts[a_i], self.goals[a_i], self.heuristics[a_i], a_i, Q['constraints'])
-                if path is not None:
-                    # If you could find a path, detect if there are again collisions and then push the node to the list
-                    Q['paths'][a_i] = path
-                    Q['collisions'] = detect_collisions(Q['paths'])
-                    Q['cost'] = get_sum_of_cost(Q['paths'])
-                    self.push_node(Q)
-                    if len(Q['collisions']) == 0:  # If there are no collisions, return the paths
-                        return Q['paths']
-                else:
-                    print("NOT ENTERED")
+            tick += 1
+            if tick % 500 == 0:
+                print(len(self.open_list))
+                tick = 1
+
+            current_node = self.pop_node()  # Pop a node from the list
+
+            if len(current_node['collisions']) != 0:  # If there are collisions
+
+                for existing_collision in current_node['collisions']:   # For each collision
+                    new_constraints = standard_splitting(existing_collision)  # Get collisions and split them in constraints for agents
+
+                    for new_constraint in new_constraints:
+                        # Add new constraint if it is not already in the list
+                        new_node_constraints = current_node['constraints']
+
+                        if new_constraint not in current_node['constraints']:  # Make new node for each agent's perspective
+                            new_node_constraints.append(new_constraint)
+
+                        new_node_Q = {
+                            'cost': 0,
+                            'constraints': new_node_constraints,
+                            'paths': current_node['paths'],
+                            'collisions': []
+                        }
+                        agent_i = new_constraint['agent']
+
+                        # Find the new path of the agents
+                        path = a_star(
+                            my_map=self.my_map,
+                            start_loc=self.starts[agent_i],
+                            goal_loc=self.goals[agent_i],
+                            h_values=self.heuristics[agent_i],
+                            agent=agent_i,
+                            constraints=new_node_Q['constraints']
+                        )
+
+                        if path is not None:
+                            # If you could find a path, detect if there are again collisions and then push the node to the list
+                            new_node_Q['paths'][agent_i] = path
+                            new_node_Q['collisions'] = detect_collisions(new_node_Q['paths'])
+                            new_node_Q['cost'] = get_sum_of_cost(new_node_Q['paths'])
+
+                            self.push_node(new_node_Q)
+
+                        # if len(new_node_Q['collisions']) == 0:  # If there are no collisions, return the paths
+                        #     self.print_results(new_node_Q)
+                        #     return new_node_Q['paths']
 
         self.print_results(root)
         return root['paths']

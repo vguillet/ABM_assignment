@@ -17,6 +17,7 @@ from single_agent_planner import get_sum_of_cost
 
 SOLVER = "CBS"
 
+
 def print_mapf_instance(my_map, starts, goals):
     """
     Prints start location and goal location of all agents, using @ for an obstacle, . for a open cell, and 
@@ -155,7 +156,6 @@ if __name__ == '__main__':
 
         cost = get_sum_of_cost(paths)
         result_file.write("{},{}\n".format(file, cost))
-
 
         if not args.batch:
             print("***Test paths on a simulation***")
