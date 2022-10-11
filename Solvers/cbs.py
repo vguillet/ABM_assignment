@@ -2,6 +2,7 @@ import time as timer
 import heapq
 import random
 from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
+from copy import deepcopy
 
 
 def detect_collision(path1, path2):
@@ -12,15 +13,20 @@ def detect_collision(path1, path2):
     #           An edge collision occurs if the robots swap their location at the same timestep.
     #           You should use "get_location(path, t)" to get the location of a robot at time t.
 
-    # -> Iterate through all timesteps
-    for step in range(len(path1)):
+    # -> Iterate through all timesteps and check for collisions
+    path_max = max(len(path1), len(path2))
+
+    for step in range(path_max):
         # -> Check if the robots are at the same location
         if get_location(path1, step) == get_location(path2, step):
             return {'type': 'vertex', 'loc': get_location(path1, step), 'timestep': step}
 
+    path_min = min(len(path1), len(path2))
+
+    for step in range(path_min):
         # -> Check if the robots swap their location
         if get_location(path1, step) == get_location(path2, step + 1) and get_location(path1, step + 1) == get_location(path2, step):
-            return {'type': 'edge', 'loc': [get_location(path1, step), get_location(path1, step + 1)], 'timestep': step}
+            return {'type': 'edge', 'loc': [get_location(path1, step), get_location(path1, step + 1)], 'timestep': step+1}
 
     return None
 
@@ -34,8 +40,9 @@ def detect_collisions(paths):
 
     # -> Check collisions between all robot path pairs
     collisions = []
-    for i in range(len(paths) - 1):
-        for j in range(i + 1, len(paths)):
+
+    for i in range(len(paths) - 1):     # ... for every agent
+        for j in range(i + 1, len(paths)):      # ... check every other agent
             collision = detect_collision(paths[i], paths[j])
             if collision is not None:
                 # -> Add robot ids to collision
@@ -160,7 +167,7 @@ class CBSSolver(object):
         tick = 1
         while len(self.open_list) > 0:  # As long as there are still nodes in the open_list
             tick += 1
-            if tick % 500 == 0:
+            if tick % 50 == 0:
                 print(len(self.open_list))
                 tick = 1
 
@@ -173,20 +180,21 @@ class CBSSolver(object):
 
                     for new_constraint in new_constraints:
                         # Add new constraint if it is not already in the list
-                        new_node_constraints = current_node['constraints']
+                        new_node_constraints = deepcopy(current_node['constraints'])
 
                         if new_constraint not in current_node['constraints']:  # Make new node for each agent's perspective
                             new_node_constraints.append(new_constraint)
 
                         new_node_Q = {
-                            'cost': 0,
+                            'cost': 0,      # Placeholder
                             'constraints': new_node_constraints,
                             'paths': current_node['paths'],
                             'collisions': []
                         }
+
+                        # Find the new path of the new constraint's agent
                         agent_i = new_constraint['agent']
 
-                        # Find the new path of the agents
                         path = a_star(
                             my_map=self.my_map,
                             start_loc=self.starts[agent_i],
