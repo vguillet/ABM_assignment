@@ -6,6 +6,7 @@ Note: To make the animation work in Spyder you should set graphics backend to 'A
 
 #!/usr/bin/python
 import argparse
+import numpy as np
 import glob
 from pathlib import Path
 from Solvers.cbs import CBSSolver
@@ -109,6 +110,24 @@ def import_mapf_instance(filename):
     return my_map, starts, goals
 
 
+def get_agent_start_goal(my_map, starts, goals):
+    # Pick a random start location
+    start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+
+    # while start is not free
+    while my_map[start[0]][start[1]] == 1 or start in starts:
+        start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+
+    # Pick a random goal location
+    goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+
+    # while goal is not free
+    while my_map[goal[0]][goal[1]] == 1 or goal in goals or goal == start:
+        goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+
+    return start, goal
+
+
 if __name__ == '__main__':
     print("Working")
     parser = argparse.ArgumentParser(description='Runs various MAPF algorithms')
@@ -120,6 +139,8 @@ if __name__ == '__main__':
                         help='Use the disjoint splitting')
     parser.add_argument('--solver', type=str, default=SOLVER,
                         help='The solver to use (one of: {CBS,Independent,Prioritized}), defaults to ' + str(SOLVER))
+    parser.add_argument('--agent_count', type=int, default=3,
+                        help='The number of agents to generate, defaults to ' + str(3))
 
     args = parser.parse_args()
     print(args)
@@ -133,25 +154,41 @@ if __name__ == '__main__':
 
         print("***Import an instance***")
         my_map, starts, goals = import_mapf_instance(file)
-        print_mapf_instance(my_map, starts, goals)
+
+        if not args.solver == "Distributed":
+            print_mapf_instance(my_map, starts, goals)
 
         if args.solver == "CBS":
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, goals)
             paths = cbs.find_solution(args.disjoint)
+
         elif args.solver == "Independent":
             print("***Run Independent***")
             solver = IndependentSolver(my_map, starts, goals)
             paths = solver.find_solution()
+
         elif args.solver == "Prioritized":
             print("***Run Prioritized***")
             solver = PrioritizedPlanningSolver(my_map, starts, goals)
             paths = solver.find_solution()
+
         elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
+            starts = []
+            goals = []
+
+            # -> Generate start/goal pairs for the agents
+            for i in range(args.agent_count):
+                start, goal = get_agent_start_goal(my_map, starts, goals)
+                starts.append(start)
+                goals.append(goal)
+
+            print_mapf_instance(my_map, starts, goals)
+
             print("***Run Distributed Planning***")
-            solver = DistributedPlanningSolver(my_map, starts, goals, ...) #!!!TODO: add your own distributed planning implementation here.
+            solver = DistributedPlanningSolver(my_map, starts, goals)
             paths = solver.find_solution()
-        else: 
+        else:
             raise RuntimeError("Unknown solver!")
 
         cost = get_sum_of_cost(paths)

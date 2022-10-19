@@ -165,13 +165,24 @@ class CBSSolver(object):
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
         tick = 1
+        best_node = None
+        iter_counter = 1000
+
         while len(self.open_list) > 0:  # As long as there are still nodes in the open_list
+            # -> Home made stuff
             tick += 1
             if tick % 50 == 0:
-                print(len(self.open_list))
+                print(len(self.open_list), f"(best cost: {best_node['cost'] if best_node is not None else None})")
                 tick = 1
 
-            current_node = self.pop_node()  # Pop a node from the list
+            if best_node is not None:
+                iter_counter -= 1
+                if iter_counter == 0:
+                    # If there are no collisions, return the solution
+                    self.print_results(root)
+                    return best_node['paths']
+
+            current_node = self.pop_node()  # Pop node from the list with smallest cost
 
             if len(current_node['collisions']) != 0:  # If there are collisions
 
@@ -209,12 +220,21 @@ class CBSSolver(object):
                             new_node_Q['paths'][agent_i] = path
                             new_node_Q['collisions'] = detect_collisions(new_node_Q['paths'])
                             new_node_Q['cost'] = get_sum_of_cost(new_node_Q['paths'])
-
                             self.push_node(new_node_Q)
 
-                        # if len(new_node_Q['collisions']) == 0:  # If there are no collisions, return the paths
-                        #     self.print_results(new_node_Q)
-                        #     return new_node_Q['paths']
+                            if len(new_node_Q['collisions']) == 0:
+                                if best_node is not None:
+                                    if new_node_Q['cost'] < best_node['cost']:
+                                        best_node = new_node_Q
+                                        iter_counter = 1000
+                                else:
+                                    best_node = new_node_Q
+                                    iter_counter = 1000
+
+            else:
+                # If there are no collisions, return the solution
+                self.print_results(root)
+                return current_node['paths']
 
         self.print_results(root)
         return root['paths']
@@ -226,3 +246,13 @@ class CBSSolver(object):
         print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
         print("Expanded nodes:  {}".format(self.num_of_expanded))
         print("Generated nodes: {}".format(self.num_of_generated))
+
+"""
+Good afternoon,
+We are currently working on the agent based modeling assignment, and had a few questions. 
+- For the first part, are we expected to find the exact optimal solutions (as specified in min-sum-of-cost.csv) for each test if the cbs is implemented correctly, or is the quality of our solution dependent on the stopping condition we implement?
+- How many agents are we expected to test our implementations with in problems 2 to 4. We have been thinking about methods for solving individual planning, but believe our solutions' performance might vary based on that.
+
+Thank you for your time,
+
+"""
