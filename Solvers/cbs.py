@@ -255,7 +255,7 @@ class CBSSolver(object):
 
 """
 Good afternoon,
-We are currently working on the agent based modeling assignment, and had a few questions. 
+We are currently working on the agent based modeling assignment, and had a few questions.
 - For the first part, are we expected to find the exact optimal solutions (as specified in min-sum-of-cost.csv) for each test if the cbs is implemented correctly, or is the quality of our solution dependent on the stopping condition we implement?
 - How many agents are we expected to test our implementations with in problems 2 to 4. We have been thinking about methods for solving individual planning, but believe our solutions' performance might vary based on that.
 

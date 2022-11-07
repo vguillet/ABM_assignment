@@ -21,14 +21,14 @@ SOLVER = "CBS"
 
 def print_mapf_instance(my_map, starts, goals):
     """
-    Prints start location and goal location of all agents, using @ for an obstacle, . for a open cell, and 
+    Prints start location and goal location of all agents, using @ for an obstacle, . for a open cell, and
     a number for the start location of each agent.
-    
+
     Example:
-        @ @ @ @ @ @ @ 
-        @ 0 1 . . . @ 
-        @ @ @ . @ @ @ 
-        @ @ @ @ @ @ @ 
+        @ @ @ @ @ @ @
+        @ 0 1 . . . @
+        @ @ @ . @ @ @
+        @ @ @ @ @ @ @
     """
     print('Start locations')
     print_locations(my_map, starts)
@@ -65,7 +65,7 @@ def import_mapf_instance(filename):
         Line X+1: xCoordStart yCoordStart xCoordGoal yCoordGoal (xy coordinate start and goal for Agent 1)
         Line X+2: xCoordStart yCoordStart xCoordGoal yCoordGoal (xy coordinate start and goal for Agent 2)
         Line X+n: xCoordStart yCoordStart xCoordGoal yCoordGoal (xy coordinate start and goal for Agent n)
-        
+
     Example:
         4 7             # grid with 4 rows and 7 columns
         @ @ @ @ @ @ @   # example row with obstacle in every column
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     print(args)
-    # Hint: Command line options can be added in Spyder by pressing CTRL + F6 > Command line options. 
+    # Hint: Command line options can be added in Spyder by pressing CTRL + F6 > Command line options.
     # In PyCharm, they can be added as parameters in the configuration.
 
     result_file = open("results.csv", "w", buffering=1)
