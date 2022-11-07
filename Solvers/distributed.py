@@ -92,11 +92,11 @@ class DistributedPlanningSolver(object):
         epoch_cap = 1000
         epoch_count = 0
 
-        agents_states = {}
+        agents_states_dict = {}
 
         for agent in self.agents:
             # -> Get agent states
-            agents_states[agent.agent_id] = {
+            agents_states_dict[agent.agent_id] = {
                 "ideal_path_to_goal": agent.ideal_path_to_goal,
                 "loc": agent.loc
             }
@@ -113,11 +113,11 @@ class DistributedPlanningSolver(object):
                     # -> Call step function
                     agent.step(
                         agents_location_map=agents_location_map,
-                        agents_states=agents_states
+                        agents_states_dict=agents_states_dict
                     )
 
                     # -> Update agent state
-                    agents_states[agent.agent_id] = self.update_agent_state(self, agent=agent)
+                    agents_states_dict[agent.agent_id] = self.update_agent_state(self, agent=agent)
 
                     if agent.at_goal:
                         # -> Add agent location as permanent obstacle in my_map

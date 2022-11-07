@@ -29,15 +29,39 @@ class AircraftDistributed(object):
         self.loc = start    # Current location
         self.path = []
 
-    def step(self, agents_location_map):
+    def step(self, agents_location_map, agents_states_dict):
         # -> Get available actions
         available_actions = self.get_available_actions(agents_location_map)
+
+        # -> Agents in visibility radius
+        agents_in_visibility_radius = []
+
+        # -> Compute distance vector to each agent
+        for agent_id, agent_state in agents_states_dict.items():
+            distance_vector = (agent_state["loc"][0] - self.loc[0], agent_state["loc"][1] - self.loc[1])
+            distance_magnitude = sqrt(distance_vector[0] ** 2 + distance_vector[1] ** 2)
+
+            if distance_magnitude < 5:
+                agents_in_visibility_radius.append(agent_id)
+
+        # -> Compute repulsive forces
+        repulsive_forces = np.zeros((len(self.my_weights), len(self.my_weights[0])))
+
+        for agent_id in agents_in_visibility_radius:
+            agent_state = agents_states_dict[agent_id]
+            # -> Add repulsive weight centered around agent location
+            repulsive_forces += \
+                self.gen_repulsive_field(loc=agent_state["loc"]) * 1/len(agent_state["ideal_path_to_goal"])
+
+        # -> Normalize array between 0 and 1
+        repulsive_forces = \
+            (repulsive_forces - np.amin(repulsive_forces)) / (np.amax(repulsive_forces) - np.amin(repulsive_forces))
 
         # -> Compute each action's cost
         costs = []
 
         for action in available_actions:
-            costs.append(self.heuristics[action] * self.my_weights[action])
+            costs.append(self.heuristics[action] * self.my_weights[action] * repulsive_forces[action])
 
         # -> Choose action with lowest cost
         action = available_actions[costs.index(min(costs))]
@@ -54,6 +78,34 @@ class AircraftDistributed(object):
 
         # -> Update agent's path
         self.path.append(action)
+
+    def gen_repulsive_field(self, loc):
+        # --> Getting max shape dimension
+        max_dim = max(self.obstacle_map.shape[0], self.obstacle_map.shape[1])
+
+        x = np.linspace(0, max_dim, max_dim)
+        y = np.linspace(0, max_dim, max_dim)
+
+        xx, yy = np.meshgrid(x, y)
+
+        grid = -np.sqrt((xx - loc[0]) ** 2 +
+                        (yy - loc[1]) ** 2)
+
+        grid += np.amax(np.absolute(grid))
+
+        # -> Normalize array between 0 and 1
+        grid = (grid - np.amin(grid)) / (np.amax(grid) - np.amin(grid))
+
+        # # --> Make a 3D plot
+        # fig = plt.figure()
+        # ax = fig.gca(projection='3d')
+        # ax.plot_surface(xx, yy, grid, cmap='viridis', linewidth=0)
+        # ax.set_xlabel('X axis')
+        # ax.set_ylabel('Y axis')
+        # ax.set_zlabel('Z axis')
+        # plt.show()
+
+        return grid
 
     def get_available_actions(self, loc=None, agents_location_map=None):
         """
