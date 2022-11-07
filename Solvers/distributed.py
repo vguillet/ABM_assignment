@@ -15,7 +15,8 @@ class DistributedPlanningSolver(object):
     """A distributed planner"""
 
     def __init__(self, my_map, starts, goals):
-        """my_map   - list of lists specifying obstacle positions
+        """
+        my_map   - list of lists specifying obstacle positions
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
         """
@@ -27,7 +28,7 @@ class DistributedPlanningSolver(object):
         self.num_of_agents = len(goals)
         self.agents = []        # List of agent objects
 
-    def get_map_state(self):
+    def get_agents_location_map(self):
         """
         Returns the map state for all agents.
         """
@@ -40,7 +41,24 @@ class DistributedPlanningSolver(object):
             map_state[agent.loc] = 1
 
         return map_state
-        
+
+    @staticmethod
+    def update_agent_state(agent):
+        """
+        Used to get dict of agents and various extra states
+        """
+        agents_state = {
+            "loc": agent.loc
+        }
+
+        if agent.at_goal:
+            agents_state["ideal_path_to_goal"] = []
+
+        else:
+            agents_state["ideal_path_to_goal"] = agent.ideal_path_to_goal
+
+        return agents_state
+
     def find_solution(self):
         """
         Finds paths for all agents from start to goal locations. 
@@ -74,6 +92,15 @@ class DistributedPlanningSolver(object):
         epoch_cap = 1000
         epoch_count = 0
 
+        agents_states = {}
+
+        for agent in self.agents:
+            # -> Get agent states
+            agents_states[agent.agent_id] = {
+                "ideal_path_to_goal": agent.ideal_path_to_goal,
+                "loc": agent.loc
+            }
+
         while not all(newAgent.at_goal for newAgent in self.agents) and epoch_count < epoch_cap:
             epoch_count += 1
 
@@ -81,10 +108,16 @@ class DistributedPlanningSolver(object):
                 # If agent has not reached goal
                 if not agent.at_goal:
                     # -> Get map state
-                    map_state = self.get_map_state()
+                    agents_location_map = self.get_agents_location_map()
 
                     # -> Call step function
-                    agent.step(map_state=map_state)
+                    agent.step(
+                        agents_location_map=agents_location_map,
+                        agents_states=agents_states
+                    )
+
+                    # -> Update agent state
+                    agents_states[agent.agent_id] = self.update_agent_state(self, agent=agent)
 
                     if agent.at_goal:
                         # -> Add agent location as permanent obstacle in my_map
