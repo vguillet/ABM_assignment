@@ -109,21 +109,27 @@ def import_mapf_instance(filename):
     f.close()
     return my_map, starts, goals
 
-
-def get_agent_start_goal(my_map, starts, goals):
+def get_agent_start_goal(my_map, starts, goals, reduced=True, start_left_side=True):
     # Pick a random start location
-    start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+    if reduced:
+        limit_start = 2
+        limit_goal = len(my_map[0]) - 2
+    else:
+        limit_start = len(my_map[0])
+        limit_goal = 0
+
+    start = (np.random.randint(0, len(my_map)), np.random.randint(0, limit_start))
 
     # while start is not free
     while my_map[start[0]][start[1]] == 1 or start in starts:
-        start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+        start = (np.random.randint(0, len(my_map)), np.random.randint(0, limit_start))
 
     # Pick a random goal location
-    goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+    goal = (np.random.randint(0, len(my_map)), np.random.randint(limit_goal, len(my_map[0])))
 
     # while goal is not free
     while my_map[goal[0]][goal[1]] == 1 or goal in goals or goal == start:
-        goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+        goal = (np.random.randint(0, len(my_map)), np.random.randint(limit_goal, len(my_map[0])))
 
     return start, goal
 
@@ -159,6 +165,16 @@ if __name__ == '__main__':
             print_mapf_instance(my_map, starts, goals)
 
         if args.solver == "CBS":
+            starts = []
+            goals = []
+
+            # -> Generate start/goal pairs for the agents
+            for i in range(args.agent_count):
+                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
+                starts.append(start)
+                goals.append(goal)
+
+            print_mapf_instance(my_map, starts, goals)
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, goals)
             paths = cbs.find_solution(args.disjoint)
@@ -169,6 +185,16 @@ if __name__ == '__main__':
             paths = solver.find_solution()
 
         elif args.solver == "Prioritized":
+            starts = []
+            goals = []
+
+            # -> Generate start/goal pairs for the agents
+            for i in range(args.agent_count):
+                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
+                starts.append(start)
+                goals.append(goal)
+
+            print_mapf_instance(my_map, starts, goals)
             print("***Run Prioritized***")
             solver = PrioritizedPlanningSolver(my_map, starts, goals)
             paths = solver.find_solution()
@@ -179,7 +205,7 @@ if __name__ == '__main__':
 
             # -> Generate start/goal pairs for the agents
             for i in range(args.agent_count):
-                start, goal = get_agent_start_goal(my_map, starts, goals)
+                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=False)
                 starts.append(start)
                 goals.append(goal)
 

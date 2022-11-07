@@ -166,7 +166,7 @@ class CBSSolver(object):
         #           Ensure to create a copy of any objects that your child nodes might inherit
         tick = 1
         best_node = None
-        iter_counter = 1000
+        # iter_counter = 1000
 
         while len(self.open_list) > 0:  # As long as there are still nodes in the open_list
             # -> Home made stuff
@@ -175,30 +175,33 @@ class CBSSolver(object):
                 print(len(self.open_list), f"(best cost: {best_node['cost'] if best_node is not None else None})")
                 tick = 1
 
-            if best_node is not None:
-                iter_counter -= 1
-                if iter_counter == 0:
-                    # If there are no collisions, return the solution
-                    self.print_results(root)
-                    return best_node['paths']
+            # if best_node is not None:
+            #     iter_counter -= 1
+            #     if iter_counter == 0:
+            #         # If there are no collisions, return the solution
+            #         self.print_results(root)
+            #         return best_node['paths']
 
             current_node = self.pop_node()  # Pop node from the list with smallest cost
+            print("Current node:", current_node)
 
             if len(current_node['collisions']) != 0:  # If there are collisions
+
+                print("Cost of current node", current_node['cost'])
 
                 for existing_collision in current_node['collisions']:   # For each collision
                     new_constraints = standard_splitting(existing_collision)  # Get collisions and split them in constraints for agents
 
                     for new_constraint in new_constraints:
                         # Add new constraint if it is not already in the list
-                        new_node_constraints = deepcopy(current_node['constraints'])
+                        new_node_constraints = current_node['constraints'].copy()
 
                         if new_constraint not in current_node['constraints']:  # Make new node for each agent's perspective
                             new_node_constraints.append(new_constraint)
 
                         new_node_Q = {
                             'cost': 0,      # Placeholder
-                            'constraints': new_node_constraints,
+                            'constraints': new_node_constraints.copy(),
                             'paths': current_node['paths'],
                             'collisions': []
                         }
@@ -222,18 +225,21 @@ class CBSSolver(object):
                             new_node_Q['cost'] = get_sum_of_cost(new_node_Q['paths'])
                             self.push_node(new_node_Q)
 
-                            if len(new_node_Q['collisions']) == 0:
-                                if best_node is not None:
-                                    if new_node_Q['cost'] < best_node['cost']:
-                                        best_node = new_node_Q
-                                        iter_counter = 1000
-                                else:
-                                    best_node = new_node_Q
-                                    iter_counter = 1000
+                            # if len(new_node_Q['collisions']) == 0:
+                            #     if best_node is not None:
+                            #         if new_node_Q['cost'] < best_node['cost']:
+                            #             best_node = new_node_Q
+                            #             iter_counter = 1000
+                            #     else:
+                            #         best_node = new_node_Q
+                            #         iter_counter = 1000
 
             else:
                 # If there are no collisions, return the solution
-                self.print_results(root)
+                print("Cost of current node -> no collisions", current_node['cost'])
+                print("no_collisions -> paths", current_node['paths'])
+                print("no_collisions -> collisions", current_node['collisions'])
+                self.print_results(current_node)
                 return current_node['paths']
 
         self.print_results(root)
