@@ -6,6 +6,7 @@ Code in this file is just provided as guidance, you are free to deviate from it.
 
 import numpy as np
 from copy import deepcopy
+import matplotlib.pyplot as plt
 
 
 class AircraftDistributed(object):
@@ -19,7 +20,7 @@ class AircraftDistributed(object):
         heuristics  - heuristic to goal location
         """
 
-        self.obstacle_map = my_map
+        self.obstacle_map = np.array(my_map)
         self.my_weights = np.ones((len(my_map), len(my_map[0])))
         self.start = start
         self.goal = goal
@@ -28,10 +29,11 @@ class AircraftDistributed(object):
 
         self.loc = start    # Current location
         self.path = []
+        print("Goal of agent", self.id, "is", self.goal)
 
     def step(self, agents_location_map, agents_states_dict):
         # -> Get available actions
-        available_actions = self.get_available_actions(agents_location_map)
+        available_actions = self.get_available_actions(agents_location_map=agents_location_map)
 
         # -> Agents in visibility radius
         agents_in_visibility_radius = []
@@ -39,13 +41,26 @@ class AircraftDistributed(object):
         # -> Compute distance vector to each agent
         for agent_id, agent_state in agents_states_dict.items():
             distance_vector = (agent_state["loc"][0] - self.loc[0], agent_state["loc"][1] - self.loc[1])
-            distance_magnitude = sqrt(distance_vector[0] ** 2 + distance_vector[1] ** 2)
+            distance_magnitude = np.sqrt(distance_vector[0] ** 2 + distance_vector[1] ** 2)
 
-            if distance_magnitude < 5:
+            if distance_magnitude < 5 and agent_id != self.id and agent_state["ideal_path_to_goal"]:
                 agents_in_visibility_radius.append(agent_id)
 
         # -> Compute repulsive forces
         repulsive_forces = np.zeros((len(self.my_weights), len(self.my_weights[0])))
+
+        # y = np.linspace(0, 9, 9)
+        # x = np.linspace(0, 22, 22)
+        #
+        # xx, yy = np.meshgrid(x, y)
+        #
+        # fig = plt.figure()
+        # ax = fig.gca(projection='3d')
+        # ax.plot_surface(xx, yy, repulsive_forces, cmap='viridis', linewidth=0)
+        # ax.set_xlabel('X axis')
+        # ax.set_ylabel('Y axis')
+        # ax.set_zlabel('Z axis')
+        # plt.show()
 
         for agent_id in agents_in_visibility_radius:
             agent_state = agents_states_dict[agent_id]
@@ -54,14 +69,19 @@ class AircraftDistributed(object):
                 self.gen_repulsive_field(loc=agent_state["loc"]) * 1/len(agent_state["ideal_path_to_goal"])
 
         # -> Normalize array between 0 and 1
-        repulsive_forces = \
-            (repulsive_forces - np.amin(repulsive_forces)) / (np.amax(repulsive_forces) - np.amin(repulsive_forces))
+        if agents_in_visibility_radius:
+            repulsive_forces = \
+                (repulsive_forces - np.amin(repulsive_forces)) / (np.amax(repulsive_forces) - np.amin(repulsive_forces))
 
         # -> Compute each action's cost
         costs = []
 
+        print("Repulsive force", repulsive_forces)
+
         for action in available_actions:
-            costs.append(self.heuristics[action] * self.my_weights[action] * repulsive_forces[action])
+            costs.append(self.heuristics[action] * self.my_weights[action] + repulsive_forces[action])
+
+        print("Costs", costs)
 
         # -> Choose action with lowest cost
         action = available_actions[costs.index(min(costs))]
@@ -81,7 +101,14 @@ class AircraftDistributed(object):
 
     def gen_repulsive_field(self, loc):
         # --> Getting max shape dimension
-        max_dim = max(self.obstacle_map.shape[0], self.obstacle_map.shape[1])
+        if self.obstacle_map.shape[0] > self.obstacle_map.shape[1]:
+            max_dim = self.obstacle_map.shape[0]
+            min_dim = self.obstacle_map.shape[1]
+            min_axis = 1
+        else:
+            max_dim = self.obstacle_map.shape[1]
+            min_dim = self.obstacle_map.shape[0]
+            min_axis = 0
 
         x = np.linspace(0, max_dim, max_dim)
         y = np.linspace(0, max_dim, max_dim)
@@ -97,23 +124,20 @@ class AircraftDistributed(object):
         grid = (grid - np.amin(grid)) / (np.amax(grid) - np.amin(grid))
 
         # # --> Make a 3D plot
-        # fig = plt.figure()
-        # ax = fig.gca(projection='3d')
-        # ax.plot_surface(xx, yy, grid, cmap='viridis', linewidth=0)
-        # ax.set_xlabel('X axis')
-        # ax.set_ylabel('Y axis')
-        # ax.set_zlabel('Z axis')
-        # plt.show()
-
-        return grid
+        if min_axis == 0:
+            return grid[0:min_dim, :]
+        else:
+            return grid[:, 0:min_dim]
 
     def get_available_actions(self, loc=None, agents_location_map=None):
         """
         Returns a list of available actions (new locations) for the agent.
         """
-
+        # print("loc_before", loc)
         if loc is None:
             loc = self.loc
+
+        # print("loc_after", loc)
 
         # (up, right, down, left, wait)
         actions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
@@ -124,10 +148,12 @@ class AircraftDistributed(object):
         # -> Check for each action if it is available
         for action in actions:
             # -> Compute new location
+            # print("actions", action)
             new_loc = (loc[0] + action[0], loc[1] + action[1])
 
             # -> Check if new location is valid
-            if 0 <= new_loc[0] < agents_location_map.shape[0] and 0 <= new_loc[1] < agents_location_map.shape[1]:
+            # print("new_loc", new_loc)
+            if 0 <= new_loc[0] < self.obstacle_map.shape[0] and 0 <= new_loc[1] < self.obstacle_map.shape[1]:
                 # -> Check if new location is free
                 # if action == (0, 0) or agents_location_map[new_loc[0]][new_loc[1]] == 0 and self.obstacle_map[new_loc[0]][new_loc[1]] == 0:
                 #     available_actions.append(new_loc)
@@ -160,6 +186,7 @@ class AircraftDistributed(object):
         while virtual_loc != self.goal:
             # -> Get available actions
             available_actions = self.get_available_actions(loc=virtual_loc)
+            # print("available_actions", available_actions)
 
             # -> Compute each action's cost
             costs = []
@@ -169,6 +196,8 @@ class AircraftDistributed(object):
 
             # -> Get action with the lowest cost
             action = available_actions[costs.index(min(costs))]
+
+            # print("action", action)
 
             # -> Update virtual location
             virtual_loc = action

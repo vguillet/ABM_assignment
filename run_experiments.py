@@ -109,8 +109,25 @@ def import_mapf_instance(filename):
     f.close()
     return my_map, starts, goals
 
+
 def get_agent_start_goal(my_map, starts, goals, reduced=True, start_left_side=True):
     # Pick a random start location
+    # start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+    #
+    # # while start is not free
+    # while my_map[start[0]][start[1]] == 1 or start in starts:
+    #     start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+    #
+    # # Pick a random goal location
+    # goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+    #
+    # # while goal is not free
+    # while my_map[goal[0]][goal[1]] == 1 or goal in goals or goal == start:
+    #     goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+    #
+    # return start, goal
+
+    # # Pick a random start location
     if reduced:
         limit_start = 2
         limit_goal = len(my_map[0]) - 2
@@ -205,7 +222,7 @@ if __name__ == '__main__':
 
             # -> Generate start/goal pairs for the agents
             for i in range(args.agent_count):
-                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=False)
+                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
                 starts.append(start)
                 goals.append(goal)
 
