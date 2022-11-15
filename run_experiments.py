@@ -151,6 +151,19 @@ def get_agent_start_goal(my_map, starts, goals, reduced=True, start_left_side=Tr
     return start, goal
 
 
+def compute_avg_deviation(paths: list, ideal_paths: list):
+    deviation_ratios = []
+
+    for i in range(len(paths)):
+        deviation = len(paths[i])/len(ideal_paths[i])
+
+        deviation_ratios.append(deviation)
+
+    avg_deviation = sum(deviation_ratios)/len(deviation_ratios)
+
+    return avg_deviation
+
+
 if __name__ == '__main__':
     print("Working")
     parser = argparse.ArgumentParser(description='Runs various MAPF algorithms')
@@ -170,7 +183,8 @@ if __name__ == '__main__':
     # Hint: Command line options can be added in Spyder by pressing CTRL + F6 > Command line options.
     # In PyCharm, they can be added as parameters in the configuration.
 
-    result_file = open("results.csv", "w", buffering=1)
+    result_file = open(f"results_{args.solver}.csv", "w", buffering=1)
+    result_file.write("Test name, Cost, Average deviation, Run time, No. of agents\n")
 
     for file in sorted(glob.glob(args.instance)):
         print(file)
@@ -182,60 +196,66 @@ if __name__ == '__main__':
             print_mapf_instance(my_map, starts, goals)
 
         if args.solver == "CBS":
-            starts = []
-            goals = []
+            # starts = []
+            # goals = []
 
             # -> Generate start/goal pairs for the agents
-            for i in range(args.agent_count):
-                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
-                starts.append(start)
-                goals.append(goal)
+            # for i in range(args.agent_count):
+            #     start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
+            #     starts.append(start)
+            #     goals.append(goal)
 
             print_mapf_instance(my_map, starts, goals)
             print("***Run CBS***")
             cbs = CBSSolver(my_map, starts, goals)
-            paths = cbs.find_solution(args.disjoint)
+            paths, ideal_paths, CPU_time = cbs.find_solution(args.disjoint)
 
         elif args.solver == "Independent":
             print("***Run Independent***")
             solver = IndependentSolver(my_map, starts, goals)
-            paths = solver.find_solution()
+            paths, ideal_paths, CPU_time = solver.find_solution()
 
         elif args.solver == "Prioritized":
-            starts = []
-            goals = []
-
-            # -> Generate start/goal pairs for the agents
-            for i in range(args.agent_count):
-                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
-                starts.append(start)
-                goals.append(goal)
+            # starts = []
+            # goals = []
+            #
+            # # -> Generate start/goal pairs for the agents
+            # for i in range(args.agent_count):
+            #     start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
+            #     starts.append(start)
+            #     goals.append(goal)
 
             print_mapf_instance(my_map, starts, goals)
             print("***Run Prioritized***")
             solver = PrioritizedPlanningSolver(my_map, starts, goals)
-            paths = solver.find_solution()
+            paths, ideal_paths, CPU_time = solver.find_solution()
 
         elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-            starts = []
-            goals = []
-
-            # -> Generate start/goal pairs for the agents
-            for i in range(args.agent_count):
-                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
-                starts.append(start)
-                goals.append(goal)
+            # starts = []
+            # goals = []
+            #
+            # # -> Generate start/goal pairs for the agents
+            # for i in range(args.agent_count):
+            #     start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
+            #     starts.append(start)
+            #     goals.append(goal)
 
             print_mapf_instance(my_map, starts, goals)
 
             print("***Run Distributed Planning***")
             solver = DistributedPlanningSolver(my_map, starts, goals)
-            paths = solver.find_solution()
+            paths, ideal_paths, CPU_time = solver.find_solution()
         else:
             raise RuntimeError("Unknown solver!")
 
         cost = get_sum_of_cost(paths)
-        result_file.write("{},{}\n".format(file, cost))
+        result_file.write("{}, {}, {}, {}, {}\n".format(
+            file,
+            cost,
+            round(compute_avg_deviation(paths, ideal_paths), 3),
+            round(CPU_time, 3),
+            len(starts)
+        ))
 
         if not args.batch:
             print("***Test paths on a simulation***")

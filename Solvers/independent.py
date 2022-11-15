@@ -47,4 +47,4 @@ class IndependentSolver(object):
         print("CPU time (s):    {:.2f}".format(self.CPU_time))
         print("Sum of costs:    {}".format(get_sum_of_cost(result)))
 
-        return result
+        return result, result, self.CPU_time

@@ -5,7 +5,7 @@ Code in this file is just provided as guidance, you are free to deviate from it.
 """
 
 import time as timer
-from single_agent_planner import get_sum_of_cost, compute_heuristics
+from single_agent_planner import get_sum_of_cost, compute_heuristics, a_star
 from aircraft import AircraftDistributed
 import numpy as np
 from copy import deepcopy
@@ -27,6 +27,11 @@ class DistributedPlanningSolver(object):
         self.goals = goals
         self.num_of_agents = len(goals)
         self.agents = []        # List of agent objects
+
+        # compute heuristics for the low-level search
+        self.heuristics = []
+        for goal in self.goals:
+            self.heuristics.append(compute_heuristics(my_map, goal))
 
     def get_agents_location_map(self):
         """
@@ -66,15 +71,25 @@ class DistributedPlanningSolver(object):
         Returns:
             result (list): with a path [(s,t), .....] for each agent.
         """
+
+        ideal_result = []
+        for i in range(self.num_of_agents):  # Find path for each agent
+            path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
+                          i, [])
+            if path is None:
+                raise BaseException('No solutions')
+
+            ideal_result.append(path)
+
         # -> Initialize constants
         start_time = timer.time()
+
         result = []
-        self.CPU_time = timer.time() - start_time
 
         # -> Create agent objects with AircraftDistributed class
         for i in range(self.num_of_agents):
             # -> Compute heuristics for new agent
-            heuristics = compute_heuristics(my_map=self.my_map, goal=self.goals[i])
+            heuristics = compute_heuristics(my_map=deepcopy(self.my_map), goal=self.goals[i])
 
             # -> Create new agent object
             newAgent = AircraftDistributed(
@@ -104,6 +119,8 @@ class DistributedPlanningSolver(object):
         while not all(newAgent.at_goal for newAgent in self.agents) and epoch_count < epoch_cap:
             epoch_count += 1
 
+            print(epoch_count)
+
             for agent in self.agents:
                 # If agent has not reached goal
                 if not agent.at_goal:
@@ -123,21 +140,26 @@ class DistributedPlanningSolver(object):
                         # -> Add agent location as permanent obstacle in my_map
                         self.my_map_shadow[agent.loc[0]][agent.loc[1]] = 1
 
-                        for agent in self.agents:
-                            if not agent.at_goal:
+                        for other_agent in self.agents:
+                            if not other_agent.at_goal:
                                 # -> Re-compute heuristics for all agents not at goal
-                                agent.heuristics = compute_heuristics(my_map=self.my_map_shadow, goal=agent.goal)
+                                other_agent.obstacle_map = np.array(self.my_map_shadow)
+                                other_agent.heuristics = compute_heuristics(my_map=self.my_map_shadow, goal=agent.goal)
 
                                 # -> Reset weights
-                                agent.my_weights = np.ones((len(self.my_map), len(self.my_map[0])))
+                                other_agent.my_weights = np.ones((len(self.my_map), len(self.my_map[0])))
+
+                                # -> Update agent state
+                                agents_states_dict[other_agent.id] = self.update_agent_state(agent=other_agent)
 
         for agent in self.agents:
             result.append(agent.path)
 
         # Print final output
+        self.CPU_time = timer.time() - start_time
         print("\n Found a solution! \n")
         print("CPU time (s):    {:.2f}".format(self.CPU_time))
         print("Sum of costs:    {}".format(get_sum_of_cost(result)))  # Hint: think about how cost is defined in your implementation
         print(result)
         
-        return result  # Hint: this should be the final result of the distributed planning (visualization is done after planning)
+        return result, ideal_result, self.CPU_time  # Hint: this should be the final result of the distributed planning (visualization is done after planning)

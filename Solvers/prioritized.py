@@ -26,6 +26,17 @@ class PrioritizedPlanningSolver(object):
     def find_solution(self):
         """ Finds paths for all agents from their start locations to their goal locations."""
 
+        ideal_results = []
+
+        for i in range(self.num_of_agents):  # Find path for each agent
+            ideal_path = a_star(self.my_map, self.starts[i], self.goals[i], self.heuristics[i],
+                          i, [])
+
+            if ideal_path is None:
+                raise BaseException('No solutions')
+
+            ideal_results.append(ideal_path)
+
         start_time = timer.time()
         result = []
         constraints = []
@@ -36,6 +47,7 @@ class PrioritizedPlanningSolver(object):
 
             if path is None:
                 raise BaseException('No solutions')
+
             result.append(path)
 
             ##############################
@@ -64,4 +76,5 @@ class PrioritizedPlanningSolver(object):
         print("CPU time (s):    {:.2f}".format(self.CPU_time))
         print("Sum of costs:    {}".format(get_sum_of_cost(result)))
         print(result)
-        return result
+
+        return result, ideal_results, self.CPU_time

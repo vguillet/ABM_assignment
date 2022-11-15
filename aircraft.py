@@ -28,7 +28,7 @@ class AircraftDistributed(object):
         self.heuristics = heuristics    # Also known as h_values
 
         self.loc = start    # Current location
-        self.path = []
+        self.path = [start]
         print("Goal of agent", self.id, "is", self.goal)
 
     def step(self, agents_location_map, agents_states_dict):
@@ -76,12 +76,12 @@ class AircraftDistributed(object):
         # -> Compute each action's cost
         costs = []
 
-        print("Repulsive force", repulsive_forces)
+        # print("Repulsive force", repulsive_forces)
 
         for action in available_actions:
             costs.append(self.heuristics[action] * self.my_weights[action] + repulsive_forces[action])
 
-        print("Costs", costs)
+        # print("Costs", costs)
 
         # -> Choose action with lowest cost
         action = available_actions[costs.index(min(costs))]
@@ -129,7 +129,7 @@ class AircraftDistributed(object):
         else:
             return grid[:, 0:min_dim]
 
-    def get_available_actions(self, loc=None, agents_location_map=None):
+    def get_available_actions(self, loc=None, agents_location_map=None, wait=True):
         """
         Returns a list of available actions (new locations) for the agent.
         """
@@ -140,8 +140,10 @@ class AircraftDistributed(object):
         # print("loc_after", loc)
 
         # (up, right, down, left, wait)
-        actions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
-        # actions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+        if wait:
+            actions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
+        else:
+            actions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
 
         available_actions = []
 
@@ -185,7 +187,7 @@ class AircraftDistributed(object):
 
         while virtual_loc != self.goal:
             # -> Get available actions
-            available_actions = self.get_available_actions(loc=virtual_loc)
+            available_actions = self.get_available_actions(loc=virtual_loc, wait=False)
             # print("available_actions", available_actions)
 
             # -> Compute each action's cost
@@ -197,7 +199,7 @@ class AircraftDistributed(object):
             # -> Get action with the lowest cost
             action = available_actions[costs.index(min(costs))]
 
-            # print("action", action)
+            print("action", available_actions, self.id, virtual_loc)
 
             # -> Update virtual location
             virtual_loc = action

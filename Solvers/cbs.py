@@ -122,6 +122,16 @@ class CBSSolver(object):
         self.num_of_expanded += 1
         return node
 
+    @staticmethod
+    def check_paths_equality(path1, path2):
+        for i in range(len(path1)):  # for each agent
+            if len(path1[i]) != len(path2[i]):  # if the length of their paths is different return False
+                return False
+            for j in range(len(path1[i])):  # if the paths are different return False
+                if path1[i][j] != path2[i][j]:
+                    return False
+        return True
+
     def find_solution(self, disjoint=True):
         """ Finds paths for all agents from their start locations to their goal locations
 
@@ -145,8 +155,11 @@ class CBSSolver(object):
                 raise BaseException('No solutions')
             root['paths'].append(path)
 
+        root_vals = root['paths'].copy()
+
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
+        print("Starting root cost:", root['cost'])
         self.push_node(root)
 
         # Task 3.1: Testing
@@ -166,28 +179,45 @@ class CBSSolver(object):
         #           Ensure to create a copy of any objects that your child nodes might inherit
         tick = 1
         best_node = None
-        # iter_counter = 1000
+        default_iter = 3000
+        iter_counter = default_iter
+
+        paths_studied = []
 
         while len(self.open_list) > 0:  # As long as there are still nodes in the open_list
             # -> Home made stuff
             tick += 1
             if tick % 50 == 0:
-                print(len(self.open_list), f"(best cost: {best_node['cost'] if best_node is not None else None})")
+                print("Length of open list", len(self.open_list))#, "\nCost of current node", current_node['cost'])
+                # print(len(paths_studied))
+                print("Current cost", current_node['cost'], len(current_node['collisions']))
                 tick = 1
 
-            # if best_node is not None:
-            #     iter_counter -= 1
-            #     if iter_counter == 0:
-            #         # If there are no collisions, return the solution
-            #         self.print_results(root)
-            #         return best_node['paths']
+                if best_node is not None:
+                    print("--> Current best node:", best_node['cost'])
+
+            # Termination conditions
+
+            # if len(paths_studied) > 100:
+            #     print("Limit reached")
+            #     for i in range(len(paths_studied)):
+            #         print(paths_studied[i])
+            #     return 0
+
+            if best_node is not None:
+                iter_counter -= 1
+                if iter_counter == 0:
+                    # If there are no collisions, return the solution
+                    CPU_time = self.print_results(root)
+                    return best_node['paths'], root_vals, CPU_time
 
             current_node = self.pop_node()  # Pop node from the list with smallest cost
-            print("Current node:", current_node)
+            # print("Current node:", current_node)
+            paths_studied.append(current_node['paths'])
 
             if len(current_node['collisions']) != 0:  # If there are collisions
 
-                print("Cost of current node", current_node['cost'])
+                # print("Cost of current node", current_node['cost'])
 
                 for existing_collision in current_node['collisions']:   # For each collision
                     new_constraints = standard_splitting(existing_collision)  # Get collisions and split them in constraints for agents
@@ -196,13 +226,15 @@ class CBSSolver(object):
                         # Add new constraint if it is not already in the list
                         new_node_constraints = current_node['constraints'].copy()
 
-                        if new_constraint not in current_node['constraints']:  # Make new node for each agent's perspective
-                            new_node_constraints.append(new_constraint)
+                        # if new_constraint not in current_node['constraints']:  # Make new node for each agent's perspective
+                        #     new_node_constraints.append(new_constraint)
+
+                        new_node_constraints.append(new_constraint)
 
                         new_node_Q = {
                             'cost': 0,      # Placeholder
-                            'constraints': new_node_constraints.copy(),
-                            'paths': current_node['paths'],
+                            'constraints': new_node_constraints,
+                            'paths': current_node['paths'].copy(),
                             'collisions': []
                         }
 
@@ -223,27 +255,52 @@ class CBSSolver(object):
                             new_node_Q['paths'][agent_i] = path
                             new_node_Q['collisions'] = detect_collisions(new_node_Q['paths'])
                             new_node_Q['cost'] = get_sum_of_cost(new_node_Q['paths'])
-                            self.push_node(new_node_Q)
 
-                            # if len(new_node_Q['collisions']) == 0:
-                            #     if best_node is not None:
-                            #         if new_node_Q['cost'] < best_node['cost']:
-                            #             best_node = new_node_Q
-                            #             iter_counter = 1000
-                            #     else:
-                            #         best_node = new_node_Q
-                            #         iter_counter = 1000
+                            # self.push_node(new_node_Q)
+
+                            # If open list is empty (beginning iteration)
+                            if not self.open_list:
+                                self.push_node(new_node_Q)
+
+                            elif new_node_Q['cost'] > root['cost'] + 10:
+                                pass
+
+                            # elif len(new_node_Q['collisions']) > root['cost'] + 3:
+                            #     pass
+
+                            elif len(new_node_Q['collisions']) > len(current_node['collisions']) + 1:
+                                pass
+
+                            elif len(new_node_Q['collisions']) > 5:
+                                pass
+
+                            else:
+                                # Check if new path already explored
+                                for path in paths_studied:
+                                    if self.check_paths_equality(new_node_Q['paths'], path):
+                                        break
+                                else:
+                                    self.push_node(new_node_Q)
+
+                            if len(new_node_Q['collisions']) == 0:
+                                if best_node is not None:
+                                    if new_node_Q['cost'] < best_node['cost']:
+                                        best_node = new_node_Q
+                                        iter_counter = default_iter
+                                else:
+                                    best_node = new_node_Q
+                                    iter_counter = default_iter
 
             else:
                 # If there are no collisions, return the solution
-                print("Cost of current node -> no collisions", current_node['cost'])
-                print("no_collisions -> paths", current_node['paths'])
-                print("no_collisions -> collisions", current_node['collisions'])
-                self.print_results(current_node)
-                return current_node['paths']
+                # print("Cost of current node -> no collisions", current_node['cost'])
+                # print("no_collisions -> paths", current_node['paths'])
+                # print("no_collisions -> collisions", current_node['collisions'])
+                CPU_time = self.print_results(current_node)
+                return current_node['paths'], root_vals, CPU_time
 
-        self.print_results(root)
-        return root['paths']
+        CPU_time = self.print_results(root)
+        return root['paths'], root_vals, CPU_time
 
     def print_results(self, node):
         print("\n Found a solution! \n")
@@ -252,6 +309,7 @@ class CBSSolver(object):
         print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
         print("Expanded nodes:  {}".format(self.num_of_expanded))
         print("Generated nodes: {}".format(self.num_of_generated))
+        return CPU_time
 
 """
 Good afternoon,

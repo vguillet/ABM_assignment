@@ -95,7 +95,7 @@ def is_constrained(child, constraint_table):
         return False
 
     # -> If timestep has constraints
-    if child["timestep"] in constraint_table.keys() or child["timestep"] > max(list(constraint_table.keys())):
+    if child["timestep"] in constraint_table.keys():  # or child["timestep"] > max(list(constraint_table.keys())):
         if child["timestep"] in constraint_table.keys():
             timestep_constraints = constraint_table[child["timestep"]]
         else:
@@ -179,7 +179,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         if curr['loc'] == goal_loc and curr['timestep'] >= earliest_goal_timestep:
             return get_path(curr)
 
-        # -> Check for child for all four directions (up, right, down, left)
+        # -> Check for child for all four directions (up, right, down, left, wait)
         for dir in range(5):
             child_loc = move(curr['loc'], dir)
 
