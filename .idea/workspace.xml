@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="154ee28b-f1ae-4e46-aeef-3836443a16b0" name="Changes" comment="" />
-    <list id="fa84dc44-b840-4e6e-accd-d4486213ac16" name="Changes by tavar" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -160,8 +159,8 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.Unnamed" />
       <item itemvalue="Python.Unnamed (1)" />
+      <item itemvalue="Python.Unnamed" />
       <item itemvalue="Python.(Test_1)" />
       <item itemvalue="Python.run_experiments" />
       <item itemvalue="Python.scratch" />
@@ -195,7 +194,7 @@
       <workItem from="1666343118260" duration="24000" />
       <workItem from="1667837140981" duration="184000" />
       <workItem from="1667837383715" duration="621000" />
-      <workItem from="1667839365711" duration="4242000" />
+      <workItem from="1667839365711" duration="5264000" />
     </task>
     <servers />
   </component>
