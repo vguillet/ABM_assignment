@@ -20,6 +20,8 @@ class DistributedPlanningSolver(object):
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
         """
+        print(starts)
+        print(goals)
         self.CPU_time = 0
         self.my_map = my_map
         self.my_map_shadow = deepcopy(my_map)
@@ -104,7 +106,7 @@ class DistributedPlanningSolver(object):
             self.agents.append(newAgent)
 
         # While all agents have not reached their goal
-        epoch_cap = 40
+        epoch_cap = 100
         epoch_count = 0
 
         agents_states_dict = {}
@@ -137,14 +139,17 @@ class DistributedPlanningSolver(object):
                     agents_states_dict[agent.id] = self.update_agent_state(agent=agent)
 
                     if agent.at_goal:
+                        # print("Agent", agent.id, "at goal")
                         # -> Add agent location as permanent obstacle in my_map
-                        self.my_map_shadow[agent.loc[0]][agent.loc[1]] = 1
+                        self.my_map_shadow[agent.loc[0]][agent.loc[1]] = True
+                        # print(self.my_map_shadow)
 
                         for other_agent in self.agents:
                             if not other_agent.at_goal:
+                                # print(other_agent.id)
                                 # -> Re-compute heuristics for all agents not at goal
                                 other_agent.obstacle_map = np.array(self.my_map_shadow)
-                                other_agent.heuristics = compute_heuristics(my_map=self.my_map_shadow, goal=agent.goal)
+                                other_agent.heuristics = compute_heuristics(my_map=self.my_map_shadow, goal=other_agent.goal)
 
                                 # -> Reset weights
                                 other_agent.my_weights = np.ones((len(self.my_map), len(self.my_map[0])))

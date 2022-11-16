@@ -20,7 +20,7 @@ class AircraftDistributed(object):
         heuristics  - heuristic to goal location
         """
 
-        self.obstacle_map = np.array(my_map)
+        self.obstacle_map = deepcopy(np.array(my_map))
         self.my_weights = np.ones((len(my_map), len(my_map[0])))
         self.start = start
         self.goal = goal
@@ -33,6 +33,7 @@ class AircraftDistributed(object):
 
     def step(self, agents_location_map, agents_states_dict):
         # -> Get available actions
+        print("Agent_ID analysed", self.id)
         available_actions = self.get_available_actions(agents_location_map=agents_location_map)
 
         # -> Agents in visibility radius
@@ -66,7 +67,7 @@ class AircraftDistributed(object):
             agent_state = agents_states_dict[agent_id]
             # -> Add repulsive weight centered around agent location
             repulsive_forces += \
-                self.gen_repulsive_field(loc=agent_state["loc"]) * 1/len(agent_state["ideal_path_to_goal"])
+                self.gen_repulsive_field(loc=agent_state["loc"]) * 1/len(agent_state["ideal_path_to_goal"]) * 1.3
 
         # -> Normalize array between 0 and 1
         if agents_in_visibility_radius:
@@ -150,16 +151,16 @@ class AircraftDistributed(object):
         # -> Check for each action if it is available
         for action in actions:
             # -> Compute new location
-            # print("actions", action)
             new_loc = (loc[0] + action[0], loc[1] + action[1])
 
             # -> Check if new location is valid
+            # print("Special print", self.obstacle_map, type(self.obstacle_map))
             # print("new_loc", new_loc)
             if 0 <= new_loc[0] < self.obstacle_map.shape[0] and 0 <= new_loc[1] < self.obstacle_map.shape[1]:
                 # -> Check if new location is free
                 # if action == (0, 0) or agents_location_map[new_loc[0]][new_loc[1]] == 0 and self.obstacle_map[new_loc[0]][new_loc[1]] == 0:
                 #     available_actions.append(new_loc)
-                
+
                 if self.obstacle_map[new_loc[0]][new_loc[1]] == 0:
                     if agents_location_map is not None:
                         if agents_location_map[new_loc[0]][new_loc[1]] == 0:
@@ -182,13 +183,13 @@ class AircraftDistributed(object):
 
     @property
     def ideal_path_to_goal(self) -> list:
-        path = []
         virtual_loc = deepcopy(self.loc)
+        path = [virtual_loc]
 
         while virtual_loc != self.goal:
             # -> Get available actions
             available_actions = self.get_available_actions(loc=virtual_loc, wait=False)
-            # print("available_actions", available_actions)
+            # print("agent:", self.id, "available_actions", available_actions, ", virtual loc", virtual_loc, self.goal)
 
             # -> Compute each action's cost
             costs = []
@@ -199,7 +200,7 @@ class AircraftDistributed(object):
             # -> Get action with the lowest cost
             action = available_actions[costs.index(min(costs))]
 
-            print("action", available_actions, self.id, virtual_loc)
+            # print("action", available_actions, self.id, virtual_loc)
 
             # -> Update virtual location
             virtual_loc = action
