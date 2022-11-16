@@ -110,45 +110,40 @@ def import_mapf_instance(filename):
     return my_map, starts, goals
 
 
-def get_agent_start_goal(my_map, starts, goals, reduced=True, start_left_side=True):
-    # Pick a random start location
-    start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
-
-    # while start is not free
-    while my_map[start[0]][start[1]] == 1 or start in starts:
+def get_agent_start_goal(my_map, starts, goals, reduced=1):
+    if reduced == 0:
+        # Pick a random start location
         start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
 
-    # Pick a random goal location
-    goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
+        # while start is not free
+        while my_map[start[0]][start[1]] == 1 or start in starts:
+            start = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
 
-    # while goal is not free
-    while my_map[goal[0]][goal[1]] == 1 or goal in goals or goal == start:
+        # Pick a random goal location
         goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
 
-    return start, goal
+        # while goal is not free
+        while my_map[goal[0]][goal[1]] == 1 or goal in goals or goal == start:
+            goal = (np.random.randint(0, len(my_map)), np.random.randint(0, len(my_map[0])))
 
-    # # Pick a random start location
-    # if reduced:
-    #     limit_start = 2
-    #     limit_goal = len(my_map[0]) - 2
-    # else:
-    #     limit_start = len(my_map[0])
-    #     limit_goal = 0
-    #
-    # start = (np.random.randint(0, len(my_map)), np.random.randint(0, limit_start))
-    #
-    # # while start is not free
-    # while my_map[start[0]][start[1]] == 1 or start in starts:
-    #     start = (np.random.randint(0, len(my_map)), np.random.randint(0, limit_start))
-    #
-    # # Pick a random goal location
-    # goal = (np.random.randint(0, len(my_map)), np.random.randint(limit_goal, len(my_map[0])))
-    #
-    # # while goal is not free
-    # while my_map[goal[0]][goal[1]] == 1 or goal in goals or goal == start:
-    #     goal = (np.random.randint(0, len(my_map)), np.random.randint(limit_goal, len(my_map[0])))
+        return start, goal
 
-    # return start, goal
+    if reduced == 1 or reduced == 2:
+        # Pick a random start location
+        start = (np.random.randint(0, len(my_map)), np.random.randint(0, 2))
+
+        # while start is not free
+        while my_map[start[0]][start[1]] == 1 or start in starts:
+            start = (np.random.randint(0, len(my_map)), np.random.randint(0, 2))
+
+        # Pick a random goal location
+        goal = (np.random.randint(0, len(my_map)), np.random.randint(len(my_map[0])-2, len(my_map[0])))
+
+        # while goal is not free
+        while my_map[goal[0]][goal[1]] == 1 or goal in goals or goal == start:
+            goal = (np.random.randint(0, len(my_map)), np.random.randint(len(my_map[0])-2, len(my_map[0])))
+
+        return start, goal
 
 
 def compute_avg_deviation(paths: list, ideal_paths: list):
@@ -162,6 +157,85 @@ def compute_avg_deviation(paths: list, ideal_paths: list):
     avg_deviation = sum(deviation_ratios)/len(deviation_ratios)
 
     return avg_deviation
+
+
+def run_scenario(args, reduced, result_file):
+    for file in sorted(glob.glob(args.instance)):
+        # print(file)
+        # print(args.agent_count)
+
+        # print("***Import an instance***")
+        if args.instance.split('/')[-1] not in ["map_1.txt", "map_2.txt", "map_3.txt"]:
+            my_map, starts, goals = import_mapf_instance(file)
+        else:
+            my_map, _, _ = import_mapf_instance(file)
+            starts = []
+            goals = []
+
+            # -> Generate start/goal pairs for the agents
+            for _ in range(args.agent_count):
+                # Choose 0 for complete random map,
+                # 1 for positioning all starts on left side,
+                # 2 for positioning all starts on both sides
+                start, goal = get_agent_start_goal(my_map, starts, goals, reduced=reduced)
+                starts.append(start)
+                goals.append(goal)
+
+            if reduced == 2:
+                # Invert every other start and goal
+                for i in range(len(starts)):
+                    if i % 2 == 0:
+                        starts[i], goals[i] = goals[i], starts[i]
+
+        if not args.solver == "Distributed":
+            # print_mapf_instance(my_map, starts, goals)
+            pass
+
+        if args.solver == "CBS":
+            # print_mapf_instance(my_map, starts, goals)
+            # print("***Run CBS***")
+            cbs = CBSSolver(my_map, starts, goals)
+            paths, ideal_paths, CPU_time = cbs.find_solution(args.disjoint)
+
+        elif args.solver == "Independent":
+            # print("***Run Independent***")
+            solver = IndependentSolver(my_map, starts, goals)
+            paths, ideal_paths, CPU_time = solver.find_solution()
+
+        elif args.solver == "Prioritized":
+            # print_mapf_instance(my_map, starts, goals)
+            # print("***Run Prioritized***")
+            solver = PrioritizedPlanningSolver(my_map, starts, goals)
+            paths, ideal_paths, CPU_time = solver.find_solution()
+
+        elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
+            # print_mapf_instance(my_map, starts, goals)
+            # print("***Run Distributed Planning***")
+            solver = DistributedPlanningSolver(my_map, starts, goals)
+            paths, ideal_paths, CPU_time = solver.find_solution()
+
+        else:
+            raise RuntimeError("Unknown solver!")
+
+        cost = get_sum_of_cost(paths)
+        ideal_cost = get_sum_of_cost(ideal_paths)
+
+        result_file.write("{}, {}, {}, {}, {}, {}\n".format(
+            file,
+            reduced,
+            cost,
+            ideal_cost,
+            round(CPU_time, 3),
+            len(starts)
+        ))
+
+        if not args.batch:
+            # print("***Test paths on a simulation***")
+            animation = Animation(my_map, starts, goals, paths)
+            # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
+            animation.show()
+
+    return result_file
 
 
 if __name__ == '__main__':
@@ -178,79 +252,37 @@ if __name__ == '__main__':
     parser.add_argument('--agent_count', type=int, default=3,
                         help='The number of agents to generate, defaults to ' + str(3))
     parser.add_argument('--iter', type=int, default=1)
+    parser.add_argument('--protocol', action='store_true', default=False,
+                        help='Use protocol for sensitivity analysis')
 
     args = parser.parse_args()
-    print(args)
+    # print(args)
     # Hint: Command line options can be added in Spyder by pressing CTRL + F6 > Command line options.
     # In PyCharm, they can be added as parameters in the configuration.
 
-    result_file = open(f"results_{args.solver}_{args.instance.split('/')[-1]}.csv", "w", buffering=1)
-    result_file.write("test_name, cost, ideal_cost, avg_deviation, run_time, nb_agents\n")
+    result_file = open(f"results_{args.solver}.csv", "w", buffering=1)
+    result_file.write("test_name, start_type, cost, ideal_cost, run_time, nb_agents\n")
 
-    for _ in range(args.iter):
-        for file in sorted(glob.glob(args.instance)):
-            print(file)
-            print(args.agent_count)
+    for x in range(args.iter):
+        print("Iter current value", x)
+        if args.protocol:
+            for map_used in ["instances/map_1.txt", "instances/map_2.txt", "instances/map_3.txt"]:
+                args.instance = map_used
 
-            print("***Import an instance***")
-            if args.instance.split('/')[-1] not in ["map_1.txt", "map_2.txt", "map_3.txt"]:
-                my_map, starts, goals = import_mapf_instance(file)
-            else:
-                my_map, _, _ = import_mapf_instance(file)
-                starts = []
-                goals = []
+                for reduce_val in range(3):
+                    # Agent count range
+                    for i in range(2, 11):
+                        args.agent_count = i
 
-                # -> Generate start/goal pairs for the agents
-                for i in range(args.agent_count):
-                    start, goal = get_agent_start_goal(my_map, starts, goals, reduced=True)
-                    starts.append(start)
-                    goals.append(goal)
+                        try:
+                            result_file = run_scenario(args, reduce_val, result_file)
 
-            if not args.solver == "Distributed":
-                print_mapf_instance(my_map, starts, goals)
-
-            if args.solver == "CBS":
-                print_mapf_instance(my_map, starts, goals)
-                print("***Run CBS***")
-                cbs = CBSSolver(my_map, starts, goals)
-                paths, ideal_paths, CPU_time = cbs.find_solution(args.disjoint)
-
-            elif args.solver == "Independent":
-                print("***Run Independent***")
-                solver = IndependentSolver(my_map, starts, goals)
-                paths, ideal_paths, CPU_time = solver.find_solution()
-
-            elif args.solver == "Prioritized":
-                print_mapf_instance(my_map, starts, goals)
-                print("***Run Prioritized***")
-                solver = PrioritizedPlanningSolver(my_map, starts, goals)
-                paths, ideal_paths, CPU_time = solver.find_solution()
-
-            elif args.solver == "Distributed":  # Wrapper of distributed planning solver class
-                print_mapf_instance(my_map, starts, goals)
-                print("***Run Distributed Planning***")
-                solver = DistributedPlanningSolver(my_map, starts, goals)
-                paths, ideal_paths, CPU_time = solver.find_solution()
-
-            else:
-                raise RuntimeError("Unknown solver!")
-
-            cost = get_sum_of_cost(paths)
-            ideal_cost = get_sum_of_cost(ideal_paths)
-
-            result_file.write("{}, {}, {}, {}, {}, {}\n".format(
-                file,
-                cost,
-                ideal_cost,
-                round(compute_avg_deviation(paths, ideal_paths), 3),
-                round(CPU_time, 3),
-                len(starts)
-            ))
-
-            if not args.batch:
-                print("***Test paths on a simulation***")
-                animation = Animation(my_map, starts, goals, paths)
-                # animation.save("output.mp4", 1.0) # install ffmpeg package to use this option
-                animation.show()
+                        except:
+                            print(f"!!!!!!!!! Run failed ({reduce_val}, {i}) !!!!!!!!!")
+        else:
+            try:
+                result_file = run_scenario(args, 0, result_file)
+            except:
+                print("!!!!!!!!! Run failed !!!!!!!!!")
 
     result_file.close()

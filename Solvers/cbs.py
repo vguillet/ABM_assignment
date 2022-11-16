@@ -1,7 +1,7 @@
 import time as timer
 import heapq
 import random
-from single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
+from ABM_assignment.single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
 from copy import deepcopy
 
 
@@ -113,12 +113,10 @@ class CBSSolver(object):
 
     def push_node(self, node):
         heapq.heappush(self.open_list, (node['cost'], len(node['collisions']), self.num_of_generated, node))
-        # print("Generate node {}".format(self.num_of_generated))
         self.num_of_generated += 1
 
     def pop_node(self):
         _, _, id, node = heapq.heappop(self.open_list)
-        # print("Expand node {}".format(id))
         self.num_of_expanded += 1
         return node
 
@@ -159,7 +157,6 @@ class CBSSolver(object):
 
         root['cost'] = get_sum_of_cost(root['paths'])
         root['collisions'] = detect_collisions(root['paths'])
-        print("Starting root cost:", root['cost'])
         self.push_node(root)
 
         # Task 3.1: Testing
@@ -188,22 +185,14 @@ class CBSSolver(object):
             # -> Home made stuff
             tick += 1
             if tick % 50 == 0:
-                print("Length of open list", len(self.open_list))#, "\nCost of current node", current_node['cost'])
-                # print(len(paths_studied))
-                print("Current cost", current_node['cost'], len(current_node['collisions']))
+                # print("Length of open list", len(self.open_list))#, "\nCost of current node", current_node['cost'])
+                # print("Current cost", current_node['cost'], len(current_node['collisions']))
                 tick = 1
 
-                if best_node is not None:
-                    print("--> Current best node:", best_node['cost'])
+                # if best_node is not None:
+                #      print("--> Current best node:", best_node['cost'])
 
             # Termination conditions
-
-            # if len(paths_studied) > 100:
-            #     print("Limit reached")
-            #     for i in range(len(paths_studied)):
-            #         print(paths_studied[i])
-            #     return 0
-
             if best_node is not None:
                 iter_counter -= 1
                 if iter_counter == 0:
@@ -212,13 +201,9 @@ class CBSSolver(object):
                     return best_node['paths'], root_vals, CPU_time
 
             current_node = self.pop_node()  # Pop node from the list with smallest cost
-            # print("Current node:", current_node)
             paths_studied.append(current_node['paths'])
 
             if len(current_node['collisions']) != 0:  # If there are collisions
-
-                # print("Cost of current node", current_node['cost'])
-
                 for existing_collision in current_node['collisions']:   # For each collision
                     new_constraints = standard_splitting(existing_collision)  # Get collisions and split them in constraints for agents
 
@@ -293,9 +278,6 @@ class CBSSolver(object):
 
             else:
                 # If there are no collisions, return the solution
-                # print("Cost of current node -> no collisions", current_node['cost'])
-                # print("no_collisions -> paths", current_node['paths'])
-                # print("no_collisions -> collisions", current_node['collisions'])
                 CPU_time = self.print_results(current_node)
                 return current_node['paths'], root_vals, CPU_time
 
@@ -303,20 +285,10 @@ class CBSSolver(object):
         return root['paths'], root_vals, CPU_time
 
     def print_results(self, node):
-        print("\n Found a solution! \n")
+        # print("\n Found a solution! \n")
         CPU_time = timer.time() - self.start_time
-        print("CPU time (s):    {:.2f}".format(CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
-        print("Expanded nodes:  {}".format(self.num_of_expanded))
-        print("Generated nodes: {}".format(self.num_of_generated))
+        # print("CPU time (s):    {:.2f}".format(CPU_time))
+        # print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
+        # print("Expanded nodes:  {}".format(self.num_of_expanded))
+        # print("Generated nodes: {}".format(self.num_of_generated))
         return CPU_time
-
-"""
-Good afternoon,
-We are currently working on the agent based modeling assignment, and had a few questions.
-- For the first part, are we expected to find the exact optimal solutions (as specified in min-sum-of-cost.csv) for each test if the cbs is implemented correctly, or is the quality of our solution dependent on the stopping condition we implement?
-- How many agents are we expected to test our implementations with in problems 2 to 4. We have been thinking about methods for solving individual planning, but believe our solutions' performance might vary based on that.
-
-Thank you for your time,
-
-"""

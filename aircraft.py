@@ -29,11 +29,9 @@ class AircraftDistributed(object):
 
         self.loc = start    # Current location
         self.path = [start]
-        print("Goal of agent", self.id, "is", self.goal)
 
     def step(self, agents_location_map, agents_states_dict):
         # -> Get available actions
-        print("Agent_ID analysed", self.id)
         available_actions = self.get_available_actions(agents_location_map=agents_location_map)
 
         # -> Agents in visibility radius
@@ -44,7 +42,7 @@ class AircraftDistributed(object):
             distance_vector = (agent_state["loc"][0] - self.loc[0], agent_state["loc"][1] - self.loc[1])
             distance_magnitude = np.sqrt(distance_vector[0] ** 2 + distance_vector[1] ** 2)
 
-            if distance_magnitude < 5 and agent_id != self.id and agent_state["ideal_path_to_goal"]:
+            if distance_magnitude < 3 and agent_id != self.id and agent_state["ideal_path_to_goal"]:
                 agents_in_visibility_radius.append(agent_id)
 
         # -> Compute repulsive forces
@@ -77,12 +75,8 @@ class AircraftDistributed(object):
         # -> Compute each action's cost
         costs = []
 
-        # print("Repulsive force", repulsive_forces)
-
         for action in available_actions:
             costs.append(self.heuristics[action] * self.my_weights[action] + repulsive_forces[action])
-
-        # print("Costs", costs)
 
         # -> Choose action with lowest cost
         action = available_actions[costs.index(min(costs))]
@@ -90,6 +84,7 @@ class AircraftDistributed(object):
         # -> Update weight map
         # Forget
         self.my_weights = self.my_weights - 0.05
+        self.my_weights = self.my_weights.clip(min=1)
 
         # Decrease prev loc appeal
         self.my_weights[self.loc[0]][self.loc[1]] += 0.3
@@ -134,13 +129,9 @@ class AircraftDistributed(object):
         """
         Returns a list of available actions (new locations) for the agent.
         """
-        # print("loc_before", loc)
         if loc is None:
             loc = self.loc
 
-        # print("loc_after", loc)
-
-        # (up, right, down, left, wait)
         if wait:
             actions = [(0, -1), (1, 0), (0, 1), (-1, 0), (0, 0)]
         else:
@@ -154,13 +145,8 @@ class AircraftDistributed(object):
             new_loc = (loc[0] + action[0], loc[1] + action[1])
 
             # -> Check if new location is valid
-            # print("Special print", self.obstacle_map, type(self.obstacle_map))
-            # print("new_loc", new_loc)
             if 0 <= new_loc[0] < self.obstacle_map.shape[0] and 0 <= new_loc[1] < self.obstacle_map.shape[1]:
                 # -> Check if new location is free
-                # if action == (0, 0) or agents_location_map[new_loc[0]][new_loc[1]] == 0 and self.obstacle_map[new_loc[0]][new_loc[1]] == 0:
-                #     available_actions.append(new_loc)
-
                 if self.obstacle_map[new_loc[0]][new_loc[1]] == 0:
                     if agents_location_map is not None:
                         if agents_location_map[new_loc[0]][new_loc[1]] == 0:
@@ -189,7 +175,6 @@ class AircraftDistributed(object):
         while virtual_loc != self.goal:
             # -> Get available actions
             available_actions = self.get_available_actions(loc=virtual_loc, wait=False)
-            # print("agent:", self.id, "available_actions", available_actions, ", virtual loc", virtual_loc, self.goal)
 
             # -> Compute each action's cost
             costs = []
@@ -199,8 +184,6 @@ class AircraftDistributed(object):
 
             # -> Get action with the lowest cost
             action = available_actions[costs.index(min(costs))]
-
-            # print("action", available_actions, self.id, virtual_loc)
 
             # -> Update virtual location
             virtual_loc = action

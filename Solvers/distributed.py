@@ -20,8 +20,6 @@ class DistributedPlanningSolver(object):
         starts      - [(x1, y1), (x2, y2), ...] list of start locations
         goals       - [(x1, y1), (x2, y2), ...] list of goal locations
         """
-        print(starts)
-        print(goals)
         self.CPU_time = 0
         self.my_map = my_map
         self.my_map_shadow = deepcopy(my_map)
@@ -106,7 +104,7 @@ class DistributedPlanningSolver(object):
             self.agents.append(newAgent)
 
         # While all agents have not reached their goal
-        epoch_cap = 100
+        epoch_cap = 500
         epoch_count = 0
 
         agents_states_dict = {}
@@ -121,7 +119,7 @@ class DistributedPlanningSolver(object):
         while not all(newAgent.at_goal for newAgent in self.agents) and epoch_count < epoch_cap:
             epoch_count += 1
 
-            print(epoch_count)
+            # print(epoch_count)
 
             for agent in self.agents:
                 # If agent has not reached goal
@@ -139,14 +137,11 @@ class DistributedPlanningSolver(object):
                     agents_states_dict[agent.id] = self.update_agent_state(agent=agent)
 
                     if agent.at_goal:
-                        # print("Agent", agent.id, "at goal")
                         # -> Add agent location as permanent obstacle in my_map
                         self.my_map_shadow[agent.loc[0]][agent.loc[1]] = True
-                        # print(self.my_map_shadow)
 
                         for other_agent in self.agents:
                             if not other_agent.at_goal:
-                                # print(other_agent.id)
                                 # -> Re-compute heuristics for all agents not at goal
                                 other_agent.obstacle_map = np.array(self.my_map_shadow)
                                 other_agent.heuristics = compute_heuristics(my_map=self.my_map_shadow, goal=other_agent.goal)
@@ -162,9 +157,9 @@ class DistributedPlanningSolver(object):
 
         # Print final output
         self.CPU_time = timer.time() - start_time
-        print("\n Found a solution! \n")
-        print("CPU time (s):    {:.2f}".format(self.CPU_time))
-        print("Sum of costs:    {}".format(get_sum_of_cost(result)))  # Hint: think about how cost is defined in your implementation
-        print(result)
+        # print("\n Found a solution! \n")
+        # print("CPU time (s):    {:.2f}".format(self.CPU_time))
+        # print("Sum of costs:    {}".format(get_sum_of_cost(result)))  # Hint: think about how cost is defined in your implementation
+        # print(result)
         
         return result, ideal_result, self.CPU_time  # Hint: this should be the final result of the distributed planning (visualization is done after planning)
