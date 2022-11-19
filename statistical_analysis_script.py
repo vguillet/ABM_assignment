@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 
 df = pd.read_csv('results_CBS.csv')
 
+# delete the cost column
+
+
 # ------------------------ Derive data ----------------------------------------
 # Add a new column to the dataframe normalising cost with the nb_agents
 df['cost_per_agent'] = df['cost'] / df['nb_agents']
@@ -35,7 +38,7 @@ print(df.keys())
 mean_cost_diff = df['cost_diff'].mean()
 print(f'Mean cost diff: {mean_cost_diff}')
 
-# Standard deviation of cost diff\
+# Standard deviation of cost diff
 std_cost_diff = df['cost_diff'].std()
 print(f'Std cost diff: {std_cost_diff}')
 
@@ -65,6 +68,7 @@ print(f'Std avg deviation per agent: {std_avg_deviation_per_agent}')
 # Avg deviation for each agent count
 mean_total_avg_deviation_per_nb_agents = df.groupby('nb_agents')['avg_deviation'].mean()
 print(f'Mean total avg deviation per agent count: {mean_total_avg_deviation_per_nb_agents}')
+
 
 # Std deviation for each agent count
 std_total_avg_deviation_per_nb_agents = df.groupby('nb_agents')['avg_deviation'].mean()
