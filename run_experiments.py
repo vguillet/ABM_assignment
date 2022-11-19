@@ -272,7 +272,7 @@ if __name__ == '__main__':
 
                 for reduce_val in range(3):
                     # Agent count range
-                    for i in range(2, 6):
+                    for i in range(2, 11):
                         args.agent_count = i
 
                         try:
