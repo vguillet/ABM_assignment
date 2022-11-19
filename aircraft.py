@@ -6,7 +6,6 @@ Code in this file is just provided as guidance, you are free to deviate from it.
 
 import numpy as np
 from copy import deepcopy
-import matplotlib.pyplot as plt
 
 
 class AircraftDistributed(object):

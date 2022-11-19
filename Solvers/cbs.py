@@ -1,8 +1,6 @@
 import time as timer
 import heapq
-import random
 from ABM_assignment.single_agent_planner import compute_heuristics, a_star, get_location, get_sum_of_cost
-from copy import deepcopy
 
 
 def detect_collision(path1, path2):
@@ -191,6 +189,9 @@ class CBSSolver(object):
 
                 # if best_node is not None:
                 #      print("--> Current best node:", best_node['cost'])
+
+            if len(self.open_list) > 2000:
+                raise BaseException('No solutions')
 
             # Termination conditions
             if best_node is not None:

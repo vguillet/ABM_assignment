@@ -97,7 +97,7 @@ def is_constrained(child, constraint_table):
     # -> If timestep has constraints
     if child["timestep"] in constraint_table.keys():  # or child["timestep"] > max(list(constraint_table.keys())):
         if child["timestep"] in constraint_table.keys():
-            timestep_constraints = constraint_table[child["timestep"]]
+                timestep_constraints = constraint_table[child["timestep"]]
         else:
             timestep_constraints = constraint_table[max(list(constraint_table.keys()))]
 
@@ -162,7 +162,7 @@ def a_star(my_map, start_loc, goal_loc, h_values, agent, constraints):
         'g_val': 0,
         'h_val': h_value,
         'parent': None,
-        "timestep": 0
+        'timestep': 0
     }
     push_node(open_list, root)
     closed_list_dict[(root['loc'])] = root

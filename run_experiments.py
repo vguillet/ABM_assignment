@@ -220,11 +220,12 @@ def run_scenario(args, reduced, result_file):
         cost = get_sum_of_cost(paths)
         ideal_cost = get_sum_of_cost(ideal_paths)
 
-        result_file.write("{}, {}, {}, {}, {}, {}\n".format(
+        result_file.write("{}, {}, {}, {}, {}, {}, {}\n".format(
             file,
             reduced,
             cost,
             ideal_cost,
+            round(compute_avg_deviation(paths, ideal_paths), 3),
             round(CPU_time, 3),
             len(starts)
         ))
@@ -261,7 +262,7 @@ if __name__ == '__main__':
     # In PyCharm, they can be added as parameters in the configuration.
 
     result_file = open(f"results_{args.solver}.csv", "w", buffering=1)
-    result_file.write("test_name, start_type, cost, ideal_cost, run_time, nb_agents\n")
+    result_file.write("test_name,start_type,cost,ideal_cost,avg_deviation,run_time,nb_agents\n")
 
     for x in range(args.iter):
         print("Iter current value", x)
@@ -271,7 +272,7 @@ if __name__ == '__main__':
 
                 for reduce_val in range(3):
                     # Agent count range
-                    for i in range(2, 11):
+                    for i in range(2, 6):
                         args.agent_count = i
 
                         try:
@@ -281,7 +282,7 @@ if __name__ == '__main__':
                             print(f"!!!!!!!!! Run failed ({reduce_val}, {i}) !!!!!!!!!")
         else:
             try:
-                result_file = run_scenario(args, 0, result_file)
+                result_file = run_scenario(args, 1, result_file)
             except:
                 print("!!!!!!!!! Run failed !!!!!!!!!")
 
