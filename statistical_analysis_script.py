@@ -1,7 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 
-df = pd.read_csv('results_CBS.csv')
+df = pd.read_csv('results_CBS_v1.csv')
 
 # delete the cost column
 
