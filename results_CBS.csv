@@ -1,0 +1,2 @@
+test_name,start_type,cost,ideal_cost,avg_deviation,run_time,nb_agents
+instances/map_3.txt, 1, 212, 210, 1.01, 3.2170653343200684, 8

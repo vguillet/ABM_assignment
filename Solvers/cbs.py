@@ -172,34 +172,20 @@ class CBSSolver(object):
         #             3. Otherwise, choose the first collision and convert to a list of constraints (using your
         #                standard_splitting function). Add a new child node to your open list for each constraint
         #           Ensure to create a copy of any objects that your child nodes might inherit
-        tick = 1
-        best_node = None
-        default_iter = 3000
-        iter_counter = default_iter
 
         paths_studied = []
 
         while len(self.open_list) > 0:  # As long as there are still nodes in the open_list
-            # -> Home made stuff
-            tick += 1
-            if tick % 50 == 0:
-                # print("Length of open list", len(self.open_list))#, "\nCost of current node", current_node['cost'])
-                # print("Current cost", current_node['cost'], len(current_node['collisions']))
-                tick = 1
-
-                # if best_node is not None:
-                #      print("--> Current best node:", best_node['cost'])
-
             # if len(self.open_list) > 2000:
             #     raise BaseException('No solutions')
 
             # Termination conditions
-            if best_node is not None:
-                iter_counter -= 1
-                if iter_counter == 0:
-                    # If there are no collisions, return the solution
-                    CPU_time = self.print_results(root)
-                    return best_node['paths'], root_vals, CPU_time
+            # if best_node is not None:
+            #     iter_counter -= 1
+            #     if iter_counter == 0:
+            #         # If there are no collisions, return the solution
+            #         CPU_time = self.print_results(root)
+            #         return best_node['paths'], root_vals, CPU_time
 
             current_node = self.pop_node()  # Pop node from the list with smallest cost
             paths_studied.append(current_node['paths'])
@@ -248,17 +234,17 @@ class CBSSolver(object):
                             if not self.open_list:
                                 self.push_node(new_node_Q)
 
-                            elif new_node_Q['cost'] > root['cost'] + 10:
-                                pass
-
-                            # elif len(new_node_Q['collisions']) > root['cost'] + 3:
+                            # elif new_node_Q['cost'] > root['cost'] + 10:
                             #     pass
-
-                            elif len(new_node_Q['collisions']) > len(current_node['collisions']) + 1:
-                                pass
-
-                            elif len(new_node_Q['collisions']) > 5:
-                                pass
+                            #
+                            # # elif len(new_node_Q['collisions']) > root['cost'] + 3:
+                            # #     pass
+                            #
+                            # elif len(new_node_Q['collisions']) > len(current_node['collisions']) + 1:
+                            #     pass
+                            #
+                            # elif len(new_node_Q['collisions']) > 5:
+                            #     pass
 
                             else:
                                 # Check if new path already explored
@@ -268,14 +254,14 @@ class CBSSolver(object):
                                 else:
                                     self.push_node(new_node_Q)
 
-                            if len(new_node_Q['collisions']) == 0:
-                                if best_node is not None:
-                                    if new_node_Q['cost'] < best_node['cost']:
-                                        best_node = new_node_Q
-                                        iter_counter = default_iter
-                                else:
-                                    best_node = new_node_Q
-                                    iter_counter = default_iter
+                            # if len(new_node_Q['collisions']) == 0:
+                            #     if best_node is not None:
+                            #         if new_node_Q['cost'] < best_node['cost']:
+                            #             best_node = new_node_Q
+                            #             iter_counter = default_iter
+                            #     else:
+                            #         best_node = new_node_Q
+                            #         iter_counter = default_iter
 
             else:
                 # If there are no collisions, return the solution
@@ -286,10 +272,10 @@ class CBSSolver(object):
         return root['paths'], root_vals, CPU_time
 
     def print_results(self, node):
-        # print("\n Found a solution! \n")
+        print("\n Found a solution! \n")
         CPU_time = timer.time() - self.start_time
-        # print("CPU time (s):    {:.2f}".format(CPU_time))
-        # print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
-        # print("Expanded nodes:  {}".format(self.num_of_expanded))
-        # print("Generated nodes: {}".format(self.num_of_generated))
+        print("CPU time (s):    {:.2f}".format(CPU_time))
+        print("Sum of costs:    {}".format(get_sum_of_cost(node['paths'])))
+        print("Expanded nodes:  {}".format(self.num_of_expanded))
+        print("Generated nodes: {}".format(self.num_of_generated))
         return CPU_time

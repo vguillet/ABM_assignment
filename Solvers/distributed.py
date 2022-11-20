@@ -119,8 +119,6 @@ class DistributedPlanningSolver(object):
         while not all(newAgent.at_goal for newAgent in self.agents) and epoch_count < epoch_cap:
             epoch_count += 1
 
-            # print(epoch_count)
-
             for agent in self.agents:
                 # If agent has not reached goal
                 if not agent.at_goal:
@@ -157,9 +155,9 @@ class DistributedPlanningSolver(object):
 
         # Print final output
         self.CPU_time = timer.time() - start_time
-        # print("\n Found a solution! \n")
-        # print("CPU time (s):    {:.2f}".format(self.CPU_time))
-        # print("Sum of costs:    {}".format(get_sum_of_cost(result)))  # Hint: think about how cost is defined in your implementation
-        # print(result)
+        print("\n Found a solution! \n")
+        print("CPU time (s):    {:.2f}".format(self.CPU_time))
+        print("Sum of costs:    {}".format(get_sum_of_cost(result)))  # Hint: think about how cost is defined in your implementation
+        print(result)
         
         return result, ideal_result, self.CPU_time  # Hint: this should be the final result of the distributed planning (visualization is done after planning)

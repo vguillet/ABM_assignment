@@ -47,19 +47,6 @@ class AircraftDistributed(object):
         # -> Compute repulsive forces
         repulsive_forces = np.zeros((len(self.my_weights), len(self.my_weights[0])))
 
-        # y = np.linspace(0, 9, 9)
-        # x = np.linspace(0, 22, 22)
-        #
-        # xx, yy = np.meshgrid(x, y)
-        #
-        # fig = plt.figure()
-        # ax = fig.gca(projection='3d')
-        # ax.plot_surface(xx, yy, repulsive_forces, cmap='viridis', linewidth=0)
-        # ax.set_xlabel('X axis')
-        # ax.set_ylabel('Y axis')
-        # ax.set_zlabel('Z axis')
-        # plt.show()
-
         for agent_id in agents_in_visibility_radius:
             agent_state = agents_states_dict[agent_id]
             # -> Add repulsive weight centered around agent location
