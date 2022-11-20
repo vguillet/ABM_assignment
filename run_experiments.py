@@ -226,7 +226,7 @@ def run_scenario(args, reduced, result_file):
             cost,
             ideal_cost,
             round(compute_avg_deviation(paths, ideal_paths), 3),
-            round(CPU_time, 3),
+            CPU_time,
             len(starts)
         ))
 
