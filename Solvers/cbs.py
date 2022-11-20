@@ -190,8 +190,8 @@ class CBSSolver(object):
                 # if best_node is not None:
                 #      print("--> Current best node:", best_node['cost'])
 
-            if len(self.open_list) > 2000:
-                raise BaseException('No solutions')
+            # if len(self.open_list) > 2000:
+            #     raise BaseException('No solutions')
 
             # Termination conditions
             if best_node is not None:

@@ -282,7 +282,7 @@ if __name__ == '__main__':
                             print(f"!!!!!!!!! Run failed ({reduce_val}, {i}) !!!!!!!!!")
         else:
             try:
-                result_file = run_scenario(args, 1, result_file)
+                result_file = run_scenario(args, 2, result_file)
             except:
                 print("!!!!!!!!! Run failed !!!!!!!!!")
 
